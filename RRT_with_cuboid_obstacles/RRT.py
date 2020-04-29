@@ -9,29 +9,53 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import axes3d 
 import matplotlib.pyplot as plt 
 from matplotlib import style 
+import copy
 plt.ion()
-
+# style.use('ggplot') 
 length = 10
 breadth = 10
 height = 10
 fig = plt.figure()
 ax = plt.axes(projection='3d')
 
-
 ax.set_xlim3d(0, 11)
 ax.set_ylim3d(0,11)
 ax.set_zlim3d(0,11)
 
+def obstacle_check(i,j,k):
+    a = b = c = d = e = f = g = h = 0
+    if(2 <= i <=3) and (3 <= j <= 4) and (0 <= k <= 1):
+        a = 1
+    elif (4 <= i <=5) and (1 <= j <= 2) and (0 <= k <= 3):
+        b = 1
+    elif (6 <= i <=7) and (5 <= j <= 6) and (0 <= k <= 4):
+        c = 1
+    elif (8 <= i <=9) and (3 <= j <= 4) and (0 <= k <= 5):
+        d = 1
+    elif (9 <= i <=10) and (7 <= j <= 8) and (0 <= k <= 10):
+        e = 1
+    elif (2 <= i <=3) and (7 <= j <= 8) and (0 <= k <= 10):
+        f = 1
+    elif (5 <= i <=6) and (4 <= j <= 5) and (0 <= k <= 10):
+        g = 1
+    elif (9 <= i <=10) and (6 <= j <= 7) and (0 <= k <= 10):
+        h = 1
+
+    if  ((a == 1) or (b == 1) or (c == 1) or (d == 1) or (e == 1) or (f == 1) or (g == 1) or (h == 1)):
+        return True
+    else:
+        return False
+
 def obstacle_map():
     # defining x, y, z co-ordinates for bar position 
-    x = [2,4,6,8,9] 
-    y = [3,1,5,3,7] 
-    z = np.zeros(5) 
+    x = [2,4,6,8,9,2,5,9] 
+    y = [3,1,5,3,7,7,4,6] 
+    z = np.zeros(8) 
 
     # size of bars 
-    dx = np.ones(5)              # length along x-axis 
-    dy = np.ones(5)              # length along y-axs 
-    dz = [1,3,4,5,9]   # height of bar 
+    dx = np.ones(8)              # length along x-axis 
+    dy = np.ones(8)              # length along y-axs 
+    dz = [1,3,4,5,9,9,9,9]   # height of bar 
 
     # setting color scheme 
     color = [] 
@@ -51,29 +75,13 @@ def boundary_check(i, j, k):
     else:
         return False
 
-def obstacle_check(i,j,k):
-    a = b = c = d = e = 0
-    if(2 <= i <=3) and (3 <= j <= 4) and (0 <= k <= 1):
-        a = 1
-    elif (4 <= i <=5) and (1 <= j <= 2) and (0 <= k <= 3):
-        b = 1
-    elif (6 <= i <=7) and (5 <= j <= 6) and (0 <= k <= 4):
-        c = 1
-    elif (8 <= i <=9) and (3 <= j <= 4) and (0 <= k <= 5):
-        d = 1
-    elif (9 <= i <=10) and (7 <= j <= 8) and (0 <= k <= 10):
-        e = 1
 
-    if  ((a == 1) or (b == 1) or (c == 1) or (d == 1) or (e == 1)):
-        return True
-    else:
-        return False
 
 def line_obstacle_check(j, i):
     k = (i[0] - j[0], i[1] - j[1], i[2] - j[2])
     k_mod = math.sqrt(k[0]**2 + k[1]**2 + k[2]**2)
     vec = (k[0]/k_mod, k[1]/k_mod, k[2]/k_mod)
-    new_point = (j[0]+0.2*vec[0], j[1]+ 0.2*vec[1], j[2]+0.2*vec[2])
+    new_point = (j[0]+0.1*vec[0], j[1]+ 0.1*vec[1], j[2]+0.1*vec[2])
     return new_point
 
 def cost2go(pt1, pt2):
@@ -108,14 +116,14 @@ all_nodes.append(start)
 parent_dict[start] = "okay"
 
 seed = (0,0,0)
-print("visitednodes",visited_nodes)
-print("all_nodes", all_nodes)
+# print("visitednodes",visited_nodes)
+# print("all_nodes", all_nodes)
 print("\n")
 
 while(goalcheck_circle(goal_x, goal_y, goal_z, seed[0], seed[1], seed[2]) == False):
     seed = generate_seed()
-    print("generated_seed", seed)
-    if (seed not in visited_nodes):
+    # print("generated_seed", seed)
+    if ((seed not in visited_nodes) and not obstacle_check(seed[0], seed[1], seed[2])):
         
         all_nodes.insert(0, seed)    
         X = np.array(all_nodes)
@@ -127,31 +135,31 @@ while(goalcheck_circle(goal_x, goal_y, goal_z, seed[0], seed[1], seed[2]) == Fal
         par = seed
         s = parent
         a = 0
-        print(s)
-        while(cost2go(par,s)>=0.3):
+        # print(s)
+        while(cost2go(par,s)>=0.1):
             a = line_obstacle_check(s, par)
             # print(a)
             if obstacle_check(a[0], a[1], a[2]):
-                # print("inside")
-                # print("stop point", s)
+#                 print("inside")
+#                 print("stop point", a)
                 break
             s = a
 
         s = (round(s[0], 1), round(s[1], 1), round(s[2], 1))
 
-        s = seed
-        all_nodes.insert(0, s) 
-        visited_nodes.add(s)
-        parent_dict[s] = parent 
-        print("parent", parent)
-        print("seed", s)
-
-        parent_list.append((parent[0], parent[1], parent[2]))
-        seed_list.append((s[0], s[1], s[2]))
-        ax.plot3D((parent[0],s[0]), (parent[1], s[1]), (parent[2], s[2]), 'black')
-        # plt.show()
-        print("\n")
-
+        # s = seed
+        if s not in visited_nodes:
+            all_nodes[0] = s 
+            visited_nodes.add(s)
+            parent_dict[s] = parent 
+            parent_list.append((parent[0], parent[1], parent[2]))
+            seed_list.append((s[0], s[1], s[2]))
+            ax.plot3D((parent[0],s[0]), (parent[1], s[1]), (parent[2], s[2]), 'black')
+            # plt.show()
+            # print("\n")
+        else:
+            all_nodes.pop(0)
+        
 
 print("Goal_Reached")
 # print("dict", parent_dict)
@@ -166,7 +174,6 @@ while parent != 'okay':
     parent = temp
     if parent == (start):
         break
-
 path.append(start)
 print("Backtracking done - shortest path found")
 
@@ -202,11 +209,7 @@ ax.set_xlabel('x-axis')
 ax.set_ylabel('y-axis') 
 ax.set_zlabel('z-axis') 
 plt.show()
+plt.pause(5)
 plt.savefig("output.png")
-plt.pause(500)
 plt.close()
 
-        
-        
-    
-    
