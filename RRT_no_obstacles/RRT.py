@@ -36,6 +36,17 @@ def goalcheck_circle(x, y, z, goal_x, goal_y, goal_z):
     else:
         return False
 
+def cost2go(pt1, pt2):
+    dist = math.sqrt((pt2[0] - pt1[0]) ** 2 + (pt2[1] - pt1[1]) ** 2 + (pt2[2] - pt1[2]) ** 2) 
+    return dist
+
+def max_step_prop(j, i):
+    k = (i[0] - j[0], i[1] - j[1], i[2] - j[2])
+    k_mod = math.sqrt(k[0]**2 + k[1]**2 + k[2]**2)
+    vec = (k[0]/k_mod, k[1]/k_mod, k[2]/k_mod)
+    new_point = (j[0]+1*vec[0], j[1]+ 1*vec[1], j[2]+1*vec[2])
+    return new_point
+
 
 start = (1,1,1)
 goal_x, goal_y, goal_z = (9,9,9)
@@ -59,20 +70,30 @@ while(goalcheck_circle(goal_x, goal_y, goal_z, seed[0], seed[1], seed[2]) == Fal
     seed = generate_seed()
     print("generated_seed", seed)
     if seed not in visited_nodes:
-        visited_nodes.add(seed)
+        
         all_nodes.insert(0, seed)    
         X = np.array(all_nodes)
         tree = KDTree(X, leaf_size=2) 
         dist, ind = tree.query(X[:1], k=2)  
         p = ind[0][1]
         parent = all_nodes[p]
+
+
+        if (cost2go(parent,seed) > 1):
+            seed = max_step_prop(parent, seed)
+            seed = (round(seed[0], 1), round(seed[1], 1), round(seed[2], 1))
+            all_nodes[0] = seed
+            visited_nodes.add(seed)
+        else:
+            visited_nodes.add(seed)
+
         parent_dict[seed] = parent 
         print("parent", parent)
         print("seed", seed)
 
         parent_list.append((parent[0], parent[1], parent[2]))
         seed_list.append((seed[0], seed[1], seed[2]))
-        # ax.plot3D((parent[0],seed[0]), (parent[1], seed[1]), (parent[2], seed[2]), 'black')
+        ax.plot3D((parent[0],seed[0]), (parent[1], seed[1]), (parent[2], seed[2]), 'black')
         # plt.show()
         print("\n")
 
@@ -100,14 +121,14 @@ y_path = [path[i][1] for i in range(len(path))]
 z_path = [path[i][2] for i in range(len(path))]
 
 
-l = 0
+# l = 0
 
-while l < len(seed_list):
-            # ax.plot3D((parent[0],seed[0]), (parent[1], seed[1]), (parent[2], seed[2]), 'black')
-    ax.plot3D((parent_list[l][0], seed_list[l][0]), (parent_list[l][1], seed_list[l][1]), (parent_list[l][2], seed_list[l][2]),  'black')
-    l = l + 1
-    plt.show()
-    plt.pause(0.000000000000000000000000000000000001)
+# while l < len(seed_list):
+#             # ax.plot3D((parent[0],seed[0]), (parent[1], seed[1]), (parent[2], seed[2]), 'black')
+#     ax.plot3D((parent_list[l][0], seed_list[l][0]), (parent_list[l][1], seed_list[l][1]), (parent_list[l][2], seed_list[l][2]),  'black')
+#     l = l + 1
+#     plt.show()
+#     plt.pause(0.000000000000000000000000000000000001)
 
 ax.plot3D(x_path, y_path, z_path, "-r")
 print(path)
